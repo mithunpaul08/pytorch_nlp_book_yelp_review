@@ -1,7 +1,9 @@
 # ### The Dataset
 
-# In[63]:
-
+import json
+from torch.utils.data import Dataset, DataLoader
+from modules.vectorizer import ReviewVectorizer
+import pandas as pd
 
 class ReviewDataset(Dataset):
     def __init__(self, review_df, vectorizer):

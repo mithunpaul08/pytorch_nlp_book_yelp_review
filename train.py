@@ -1,3 +1,11 @@
+from utils.utils import generate_batches
+from modules.dataset import ReviewDataset
+from model.classifier import ReviewClassifier
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from tqdm import tqdm_notebook
+
 class Trainer:
     def make_train_state(args):
         return {'stop_early': False,
@@ -61,7 +69,22 @@ class Trainer:
         n_correct = torch.eq(y_pred_indices, y_target).sum().item()
         return n_correct / len(y_pred_indices) * 100
 
-    def train(classifier,dataset):
+
+    def train(self,args):
+        if args.reload_from_files:
+            # training from a checkpoint
+            print("Loading dataset and vectorizer")
+            dataset = ReviewDataset.load_dataset_and_load_vectorizer(args.review_csv,
+                                                                    args.vectorizer_file)
+        else:
+            print("Loading dataset and creating vectorizer")
+            # create dataset and vectorizer
+            dataset = ReviewDataset.load_dataset_and_make_vectorizer(args.review_csv)
+            dataset.save_vectorizer(args.vectorizer_file)
+        vectorizer = dataset.get_vectorizer()
+
+        classifier = ReviewClassifier(num_features=len(vectorizer.review_vocab))
+
         classifier = classifier.to(args.device)
 
         loss_func = nn.BCEWithLogitsLoss()
@@ -70,7 +93,7 @@ class Trainer:
                                                          mode='min', factor=0.5,
                                                          patience=1)
 
-        train_state = make_train_state(args)
+        train_state = self.make_train_state(args)
 
         epoch_bar = tqdm_notebook(desc='training routine',
                                   total=args.num_epochs,
@@ -124,7 +147,7 @@ class Trainer:
                     optimizer.step()
                     # -----------------------------------------
                     # compute the accuracy
-                    acc_t = compute_accuracy(y_pred, batch_dict['y_target'])
+                    acc_t = self.compute_accuracy(y_pred, batch_dict['y_target'])
                     running_acc += (acc_t - running_acc) / (batch_index + 1)
 
                     # update bar
@@ -157,7 +180,7 @@ class Trainer:
                     running_loss += (loss_t - running_loss) / (batch_index + 1)
 
                     # compute the accuracy
-                    acc_t = compute_accuracy(y_pred, batch_dict['y_target'])
+                    acc_t = self.compute_accuracy(y_pred, batch_dict['y_target'])
                     running_acc += (acc_t - running_acc) / (batch_index + 1)
 
                     val_bar.set_postfix(loss=running_loss,
@@ -168,7 +191,7 @@ class Trainer:
                 train_state['val_loss'].append(running_loss)
                 train_state['val_acc'].append(running_acc)
 
-                train_state = update_train_state(args=args, model=classifier,
+                train_state = self.update_train_state(args=args, model=classifier,
                                                  train_state=train_state)
 
                 scheduler.step(train_state['val_loss'][-1])
@@ -186,4 +209,36 @@ class Trainer:
         except KeyboardInterrupt:
             print("Exiting loop")
 
-    return train_state
+
+
+                # compute the loss & accuracy on the test set using the best available model
+
+        classifier.load_state_dict(torch.load(train_state['model_filename']))
+        classifier = classifier.to(args.device)
+
+        dataset.set_split('test')
+        batch_generator = generate_batches(dataset,
+                                           batch_size=args.batch_size,
+                                           device=args.device)
+        running_loss = 0.
+        running_acc = 0.
+        classifier.eval()
+
+        for batch_index, batch_dict in enumerate(batch_generator):
+            # compute the output
+            y_pred = classifier(x_in=batch_dict['x_data'].float())
+
+            # compute the loss
+            loss = loss_func(y_pred, batch_dict['y_target'].float())
+            loss_t = loss.item()
+            running_loss += (loss_t - running_loss) / (batch_index + 1)
+
+            # compute the accuracy
+            acc_t = self.compute_accuracy(y_pred, batch_dict['y_target'])
+            running_acc += (acc_t - running_acc) / (batch_index + 1)
+
+        train_state['test_loss'] = running_loss
+        train_state['test_acc'] = running_acc
+        print("Test loss: {:.3f}".format(train_state['test_loss']))
+        print("Test Accuracy: {:.2f}".format(train_state['test_acc']))
+

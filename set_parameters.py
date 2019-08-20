@@ -1,5 +1,12 @@
+from argparse import Namespace
+import torch
+import os
+from utils.utils import set_seed_everywhere
+from utils.utils import handle_dirs
+from modules.dataset import ReviewDataset
+
 class Initializer():
-    def set_parameters():
+    def set_parameters(self):
         args = Namespace(
             # Data and Path information
             frequency_cutoff=25,
@@ -46,15 +53,17 @@ class Initializer():
         # handle dirs
         handle_dirs(args.save_dir)
 
-def read_data_make_vectorizer():
-    if args.reload_from_files:
-        # training from a checkpoint
-        print("Loading dataset and vectorizer")
-        dataset = ReviewDataset.load_dataset_and_load_vectorizer(args.review_csv,
-                                                                args.vectorizer_file)
-    else:
-        print("Loading dataset and creating vectorizer")
-        # create dataset and vectorizer
-        dataset = ReviewDataset.load_dataset_and_make_vectorizer(args.review_csv)
-        dataset.save_vectorizer(args.vectorizer_file)
-    return dataset
+        return args
+
+    def read_data_make_vectorizer(args):
+        if args.reload_from_files:
+            # training from a checkpoint
+            print("Loading dataset and vectorizer")
+            dataset = ReviewDataset.load_dataset_and_load_vectorizer(args.review_csv,
+                                                                    args.vectorizer_file)
+        else:
+            print("Loading dataset and creating vectorizer")
+            # create dataset and vectorizer
+            dataset = ReviewDataset.load_dataset_and_make_vectorizer(args.review_csv)
+            dataset.save_vectorizer(args.vectorizer_file)
+        return dataset
