@@ -1,6 +1,11 @@
+from collections import Counter
+from modules.vocabulary import Vocabulary
+import numpy as np
+import string
+
+
 # ### The Vectorizer
 
-# In[62]:
 
 class ReviewVectorizer(object):
     """ The Vectorizer which coordinates the Vocabularies and puts them to use"""
