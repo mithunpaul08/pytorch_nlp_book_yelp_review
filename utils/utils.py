@@ -2,6 +2,8 @@ import numpy as np
 import torch
 import os
 import re
+from torch.utils.data import Dataset, DataLoader
+
 # #### General utilities
 
 def set_seed_everywhere(seed, cuda):

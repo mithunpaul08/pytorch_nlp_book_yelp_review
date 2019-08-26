@@ -132,15 +132,15 @@ class ReviewDataset(Dataset):
             a dictionary holding the data point's features (x_data) and label (y_target)
         """
         row = self._target_df.iloc[index]
+        combined_claim_evidence=row.claim+row.evidence
+        claim_evidence_vector = \
+            self._vectorizer.vectorize(combined_claim_evidence)
 
-        review_vector = \
-            self._vectorizer.vectorize(row.review)
+        label_index = \
+            self._vectorizer.rating_vocab.lookup_token(row.label)
 
-        rating_index = \
-            self._vectorizer.rating_vocab.lookup_token(row.rating)
-
-        return {'x_data': review_vector,
-                'y_target': rating_index}
+        return {'x_data': claim_evidence_vector,
+                'y_target': label_index}
 
     def get_num_batches(self, batch_size):
         """Given a batch size, return the number of batches in the dataset
