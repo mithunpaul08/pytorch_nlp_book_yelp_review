@@ -2,6 +2,7 @@
 import torch
 import torch.nn as nn
 
+
 class ReviewClassifier(nn.Module):
     """ a simple perceptron based classifier """
 

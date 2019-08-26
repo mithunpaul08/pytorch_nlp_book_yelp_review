@@ -5,6 +5,7 @@ from torch.utils.data import Dataset, DataLoader
 from modules.vectorizer import ReviewVectorizer
 import pandas as pd
 
+
 class ReviewDataset(Dataset):
     def __init__(self, review_df, vectorizer):
         """
@@ -30,18 +31,43 @@ class ReviewDataset(Dataset):
 
         self.set_split('train')
 
+    def replace_if_PERSON_C1_format(sent, args):
+        sent_replaced = ""
+        regex = re.compile('([A-Z]+)(-)([ce])([0-99])')
+        if (args.type_of_data == "ner_replaced" and regex.search(sent)):
+            sent_replaced = regex.sub(r'\1\3\4', sent)
+        else:
+            sent_replaced = sent
+        return sent_replaced
+
+    def get_num_lines(file_path):
+        fp = open(file_path, "r+")
+        buf = mmap.mmap(fp.fileno(), 0)
+        lines = 0
+        while buf.readline():
+            lines += 1
+        return lines
+
     @classmethod
-    def load_dataset_and_make_vectorizer(cls, review_csv):
+    def load_dataset_and_make_vectorizer(cls, args):
         """Load dataset and make a new vectorizer from scratch
 
         Args:
-            review_csv (str): location of the dataset
+            args (str): all arguments which were create initially.
         Returns:
             an instance of ReviewDataset
         """
-        review_df = pd.read_csv(review_csv)
-        train_review_df = review_df[review_df.split == 'train']
-        return cls(review_df, ReviewVectorizer.from_dataframe(train_review_df))
+        fever_lex_train_df = pd.read_json(args.fever_lex_train, lines=True)
+        fever_lex_train_df['split'] = "train"
+
+        fever_lex_dev_df = pd.read_json(args.fever_lex_dev, lines=True)
+        fever_lex_dev_df['split'] = "val"
+
+        frames = [fever_lex_train_df, fever_lex_dev_df]
+        combined_train_dev_test_with_split_column_df = pd.concat(frames)
+
+        # todo: uncomment/call and check the function replace_if_PERSON_C1_format has any effect on claims and evidence sentences-mainpulate dataframe
+        return cls(combined_train_dev_test_with_split_column_df, ReviewVectorizer.from_dataframe(fever_lex_train_df))
 
     @classmethod
     def load_dataset_and_load_vectorizer(cls, review_csv, vectorizer_filepath):
@@ -54,7 +80,8 @@ class ReviewDataset(Dataset):
         Returns:
             an instance of ReviewDataset
         """
-        review_df = pd.read_csv(review_csv)
+        print(f"just before reading file {review_csv}")
+        review_df = cls.read_rte_data(review_csv)
 
         vectorizer = cls.load_vectorizer_only(vectorizer_filepath)
         return cls(review_df, vectorizer)
@@ -106,9 +133,11 @@ class ReviewDataset(Dataset):
         """
         row = self._target_df.iloc[index]
 
-        review_vector = self._vectorizer.vectorize(row.review)
+        review_vector = \
+            self._vectorizer.vectorize(row.review)
 
-        rating_index = self._vectorizer.rating_vocab.lookup_token(row.rating)
+        rating_index = \
+            self._vectorizer.rating_vocab.lookup_token(row.rating)
 
         return {'x_data': review_vector,
                 'y_target': rating_index}
@@ -122,3 +151,19 @@ class ReviewDataset(Dataset):
             number of batches in the dataset
         """
         return len(self) // batch_size
+
+
+def generate_batches(dataset, batch_size, shuffle=True,
+                     drop_last=True, device="cpu"):
+    """
+    A generator function which wraps the PyTorch DataLoader. It will
+      ensure each tensor is on the write device location.
+    """
+    dataloader = DataLoader(dataset=dataset, batch_size=batch_size,
+                            shuffle=shuffle, drop_last=drop_last)
+
+    for data_dict in dataloader:
+        out_data_dict = {}
+        for name, tensor in data_dict.items():
+            out_data_dict[name] = data_dict[name].to(device)
+        yield out_data_dict

@@ -11,8 +11,8 @@ class Initializer():
             # Data and Path information
             frequency_cutoff=25,
             model_state_file='model.pth',
-            review_csv='./data/yelp/reviews_with_splits_lite.csv',
-            # review_csv='data/yelp/reviews_with_splits_full.csv',
+            fever_lex_train='data-local/rte/fever/train/fever_train_lex_3labels_200_smartner_3labels_no_lists_evidence_not_sents.jsonl',
+            fever_lex_dev='data-local/rte/fever/dev/fever_dev_lex_3labels_200_no_lists_evidence_not_sents.jsonl',
             save_dir='model_storage/ch3/yelp/',
             vectorizer_file='vectorizer.json',
             # No Model hyper parameters
@@ -27,7 +27,10 @@ class Initializer():
             cuda=True,
             expand_filepaths_to_save_dir=True,
             reload_from_files=False,
+            truncate_words_length=1000,
+            type_of_data='plain'
         )
+
         if args.expand_filepaths_to_save_dir:
             args.vectorizer_file = os.path.join(args.save_dir,
                                                 args.vectorizer_file)
@@ -55,15 +58,15 @@ class Initializer():
 
         return args
 
-    def read_data_make_vectorizer(args):
+    def read_data_make_vectorizer(self,args):
         if args.reload_from_files:
             # training from a checkpoint
             print("Loading dataset and vectorizer")
             dataset = ReviewDataset.load_dataset_and_load_vectorizer(args.review_csv,
-                                                                    args.vectorizer_file)
+                                                                     args.vectorizer_file)
         else:
             print("Loading dataset and creating vectorizer")
             # create dataset and vectorizer
-            dataset = ReviewDataset.load_dataset_and_make_vectorizer(args.review_csv)
+            dataset = ReviewDataset.load_dataset_and_make_vectorizer(args)
             dataset.save_vectorizer(args.vectorizer_file)
         return dataset

@@ -2,7 +2,6 @@
 
 # In[62]:
 
-
 class ReviewVectorizer(object):
     """ The Vectorizer which coordinates the Vocabularies and puts them to use"""
 
@@ -45,12 +44,12 @@ class ReviewVectorizer(object):
         rating_vocab = Vocabulary(add_unk=False)
 
         # Add ratings
-        for rating in sorted(set(review_df.rating)):
+        for rating in sorted(set(review_df.label)):
             rating_vocab.add_token(rating)
 
         # Add top words if count > provided count
         word_counts = Counter()
-        for review in review_df.review:
+        for review in review_df.claim:
             for word in review.split(" "):
                 if word not in string.punctuation:
                     word_counts[word] += 1

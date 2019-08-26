@@ -1,8 +1,3 @@
-# ### The Vocabulary
-
-# In[61]:
-
-
 class Vocabulary(object):
     """Class to process text and extract vocabulary for mapping"""
 
@@ -66,16 +61,16 @@ class Vocabulary(object):
         return [self.add_token(token) for token in tokens]
 
     def lookup_token(self, token):
-        """Retrieve the index associated with the token
+        """Retrieve the index associated with the token 
           or the UNK index if token isn't present.
 
         Args:
-            token (str): the token to look up
+            token (str): the token to look up 
         Returns:
             index (int): the index corresponding to the token
         Notes:
-            `unk_index` needs to be >=0 (having been added into the Vocabulary)
-              for the UNK functionality
+            `unk_index` needs to be >=0 (having been added into the Vocabulary) 
+              for the UNK functionality 
         """
         if self.unk_index >= 0:
             return self._token_to_idx.get(token, self.unk_index)
@@ -85,7 +80,7 @@ class Vocabulary(object):
     def lookup_index(self, index):
         """Return the token associated with the index
 
-        Args:
+        Args: 
             index (int): the index to look up
         Returns:
             token (str): the token corresponding to the index
