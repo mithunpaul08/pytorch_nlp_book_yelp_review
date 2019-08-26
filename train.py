@@ -207,7 +207,7 @@ class Trainer:
                 val_bar.n = 0
                 epoch_bar.update()
 
-                print(f"val loss: {running_loss} val Accuracy: {running_acc} ")
+                print(f"epoch:{epoch_index} val loss: {running_loss} val Accuracy: {running_acc} ")
                 
 
         except KeyboardInterrupt:

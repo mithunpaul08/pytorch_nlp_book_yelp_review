@@ -11,8 +11,8 @@ class Initializer():
             # Data and Path information
             frequency_cutoff=25,
             model_state_file='model.pth',
-            fever_lex_train='data-local/rte/fever/train/fever_train_lex_3labels_200_smartner_3labels_no_lists_evidence_not_sents.jsonl',
-            fever_lex_dev='data-local/rte/fever/dev/fever_dev_lex_3labels_200_no_lists_evidence_not_sents.jsonl',
+            fever_lex_train='data-local/rte/fever/train/fever_train_lex_3labels_11k_smartner_3labels_no_lists_evidence_not_sents.jsonl',
+            fever_lex_dev='data-local/rte/fever/dev/fever_dev_lex_3labels_2k_no_lists_evidence_not_sents.jsonl',
             save_dir='model_storage/ch3/yelp/',
             vectorizer_file='vectorizer.json',
             # No Model hyper parameters
@@ -20,7 +20,7 @@ class Initializer():
             batch_size=128,
             early_stopping_criteria=5,
             learning_rate=0.001,
-            num_epochs=2,
+            num_epochs=20,
             seed=1337,
             # Runtime options
             catch_keyboard_interrupt=True,
