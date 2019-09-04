@@ -20,7 +20,7 @@ class Initializer():
             batch_size=128,
             early_stopping_criteria=5,
             learning_rate=0.001,
-            num_epochs=20,
+            num_epochs=200,
             seed=1337,
             # Runtime options
             catch_keyboard_interrupt=True,
